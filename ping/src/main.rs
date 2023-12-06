@@ -1,8 +1,7 @@
-use std::{thread, time};
-use std::io::{BufReader, Write};
+use std::io::BufReader;
 use std::net::{TcpListener, TcpStream};
 
-use ping::parse_http_request;
+use common::{parse_http_request, respond};
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
@@ -37,20 +36,6 @@ fn handle_connection(mut stream: TcpStream) {
             }
         },
         Err(_) => println!("Could not parse http request")
-    }
-
-    fn respond(response: Result<&str, &str>, stream: &mut TcpStream) {
-        let (status, msg) = match response {
-            Ok(msg) => ("HTTP/1.1 200 OK", msg),
-            Err(msg) => ("HTTP/1.1 404 NOT FOUND", msg)
-        };
-
-        let len = msg.len();
-        let response = format!("{status}\r\nContent-Length: {len}\r\n\r\n{msg}");
-
-        thread::sleep(time::Duration::from_secs(1));
-
-        stream.write_all(response.as_bytes()).unwrap();
     }
 
 }

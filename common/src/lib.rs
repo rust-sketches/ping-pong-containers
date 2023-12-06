@@ -1,5 +1,7 @@
+use std::{io, thread, time};
 use std::collections::HashMap;
-use std::io;
+use std::io::Write;
+use std::net::TcpStream;
 
 pub fn parse_http_request(reader: &mut impl io::BufRead) -> Result<(String, HashMap<String, String>, Option<String>), io::Error> {
     let mut request = String::new();
@@ -31,6 +33,20 @@ pub fn parse_http_request(reader: &mut impl io::BufRead) -> Result<(String, Hash
     }
 
     Ok((request.trim().into(), headers, body))
+}
+
+pub fn respond(response: Result<&str, &str>, stream: &mut TcpStream) {
+    let (status, msg) = match response {
+        Ok(msg) => ("HTTP/1.1 200 OK", msg),
+        Err(msg) => ("HTTP/1.1 404 NOT FOUND", msg)
+    };
+
+    let len = msg.len();
+    let response = format!("{status}\r\nReferer: {len}\r\n\r\n{msg}");
+
+    thread::sleep(time::Duration::from_secs(1));
+
+    stream.write_all(response.as_bytes()).unwrap();
 }
 
 #[cfg(test)]

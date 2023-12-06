@@ -2,5 +2,6 @@
 
 members = [
     "ping",
-    "pong"
+    "pong",
+    "common"
 ]
