@@ -36,7 +36,7 @@ pub fn parse_http_request(reader: &mut impl io::BufRead) -> Result<(String, Hash
     Ok((request.trim().into(), headers, body))
 }
 
-pub fn respond(response: Result<&str, &str>, stream: &mut TcpStream) {
+pub fn respond(response: Result<&str, &str>, stream: &mut TcpStream, mode: &str) {
     let (status, msg) = match response {
         Ok(msg) => ("HTTP/1.1 200 OK", msg),
         Err(msg) => ("HTTP/1.1 404 NOT FOUND", msg)
@@ -50,7 +50,8 @@ pub fn respond(response: Result<&str, &str>, stream: &mut TcpStream) {
     match response {
         Ok(endpoint) => {
             let port = if endpoint == "ping" { 8787 } else { 7878 };
-            let host = format!("127.0.0.1:{}", port);
+            let ip = if mode == "local" { "127.0.0.1" } else { "172.17.0.1" };
+            let host = format!("{}:{}", ip, port);
 
             let address = host.to_socket_addrs().unwrap().next().unwrap();
             let timeout = Duration::from_millis(5000);
@@ -65,7 +66,7 @@ pub fn respond(response: Result<&str, &str>, stream: &mut TcpStream) {
     }
 }
 
-pub fn handle_connection(mut stream: TcpStream, listen_for: &str, send: &str) {
+pub fn handle_connection(mut stream: TcpStream, listen_for: &str, send: &str, mode: &str) {
     let mut reader = BufReader::new(&mut stream);
 
     match parse_http_request((&mut reader).into()) {
@@ -73,7 +74,8 @@ pub fn handle_connection(mut stream: TcpStream, listen_for: &str, send: &str) {
             if request == format!("POST /{} HTTP/1.1", listen_for) {
                 respond(
                     Ok(send),
-                    &mut stream
+                    &mut stream,
+                    mode
                 );
 
                 println!("received {}, sending {}", listen_for, send);
@@ -81,7 +83,8 @@ pub fn handle_connection(mut stream: TcpStream, listen_for: &str, send: &str) {
             } else {
                 respond(
                     Err("unrecognized request received"),
-                    &mut stream
+                    &mut stream,
+                    mode
                 );
 
                 println!("received unexpected request: {}", request);
