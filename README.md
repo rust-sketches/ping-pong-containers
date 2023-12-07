@@ -39,5 +39,5 @@ docker build -t pong -f pong.Dockerfile . && docker run --name pong -p 8787:8787
 In a third terminal, kick off the process by sending a message to one of them
 
 ```
-curl -v -X POST 127.0.0.1:8787/pong
+curl -v -X POST 127.0.0.1:8787/ping
 ```
